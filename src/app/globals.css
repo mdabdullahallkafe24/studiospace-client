@@ -1,26 +1,176 @@
+
 @import "tailwindcss";
+@plugin "daisyui";
+
+/* ================================
+   StudioSpace Theme Variables
+================================ */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f6;
+  --foreground: #252724;
+  --primary: #c66b45;
+  --secondary: #697b63;
+  --muted: #777970;
+  --surface: #f0eee8;
+  --border: #e9e6de;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ================================
+   Global Styles
+================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  margin: 0;
+  padding: 0;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+/* ================================
+   Layout Utilities
+================================ */
+
+.section-padding {
+  padding: 100px 24px;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 65px 20px;
+  }
+}
+
+.studio-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+/* ================================
+   Hover Effects
+================================ */
+
+.premium-link {
+  transition: color 0.25s ease;
+}
+
+.premium-link:hover {
+  color: var(--primary);
+}
+
+.premium-card {
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(37, 39, 36, 0.1);
+}
+
+/* ================================
+   Dark Theme
+================================ */
+
+html.dark body {
+  background-color: #171816;
+  color: #f5f3ee;
+}
+
+/* Main backgrounds */
+html.dark [class*="bg-[#FAF9F6]"],
+html.dark [class*="bg-white"] {
+  background-color: #22241f !important;
+}
+
+/* Secondary backgrounds */
+html.dark [class*="bg-[#F0EEE8]"] {
+  background-color: #30322c !important;
+}
+
+/* Text colors */
+html.dark [class*="text-[#252724]"] {
+  color: #f5f3ee !important;
+}
+
+html.dark [class*="text-[#777970]"],
+html.dark [class*="text-[#999]"],
+html.dark [class*="text-[#555]"] {
+  color: #b8b8ae !important;
+}
+
+/* Borders */
+html.dark [class*="border-[#E9E6DE]"] {
+  border-color: #41433c !important;
+}
+
+/* Dark mode form controls */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  color: #f5f3ee;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #99998f;
+}
+
+/* Smooth theme transition */
+html,
+body {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* ================================
+   Accessibility
+================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

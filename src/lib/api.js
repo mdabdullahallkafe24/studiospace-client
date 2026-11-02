@@ -68,3 +68,99 @@ export async function getStudioById(id) {
 export async function getCategories() {
   return apiRequest("/api/categories");
 }
+
+
+
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+async function apiRequest(endpoint, options = {}) {
+  if (!API_URL) {
+    throw new Error("Backend API URL is not configured.");
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
+    },
+    cache: "no-store",
+  });
+
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || result?.success === false) {
+    throw new Error(
+      result?.message || `API request failed: ${response.status}`
+    );
+  }
+
+  return result?.data ?? result;
+}
+
+// Get all studios
+export async function getStudios({
+  search = "",
+  category = "",
+  location = "",
+  limit,
+} = {}) {
+  const params = new URLSearchParams();
+
+  if (search) params.set("search", search);
+  if (category) params.set("category", category);
+  if (location) params.set("location", location);
+  if (limit) params.set("limit", String(limit));
+
+  const query = params.toString();
+
+  return apiRequest(`/api/studios${query ? `?${query}` : ""}`);
+}
+
+// Get featured studios
+export async function getFeaturedStudios() {
+  return getStudios({ limit: 6 });
+}
+
+// Get single studio
+export async function getStudioById(id) {
+  if (!id) throw new Error("Studio ID is required.");
+
+  return apiRequest(`/api/studios/${encodeURIComponent(id)}`);
+}
+
+// Get categories
+export async function getCategories() {
+  return apiRequest("/api/categories");
+}
+
+// Create studio
+export async function createStudio(data) {
+  return apiRequest("/api/studios", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+// Get logged-in user's listings
+export async function getMyListings() {
+  return apiRequest("/api/studios/my-listings");
+}
+
+// Update studio
+export async function updateStudio(id, data) {
+  return apiRequest(`/api/studios/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+// Delete studio
+export async function deleteStudio(id) {
+  return apiRequest(`/api/studios/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}

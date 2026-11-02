@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -16,13 +17,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { createStudio } from "@/lib/api";
 
 const categories = [
-  "Photography Studio",
-  "Sound Stage",
-  "Podcast Room",
-  "Music Suite",
-  "Art Workshop",
+  { label: "Photography Studio", value: "photo-studio" },
+  { label: "Sound Stage", value: "sound-stage" },
+  { label: "Podcast Room", value: "podcast-room" },
+  { label: "Music Suite", value: "music-suite" },
+  { label: "Art Workshop", value: "art-workshop" },
 ];
 
 const availableAmenities = [
@@ -37,6 +39,8 @@ const availableAmenities = [
 ];
 
 export default function AddStudioPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -50,6 +54,7 @@ export default function AddStudioPage() {
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -69,8 +74,10 @@ export default function AddStudioPage() {
     }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+
+    if (isSubmitting) return;
 
     setError("");
     setMessage("");
@@ -99,7 +106,10 @@ export default function AddStudioPage() {
       }
     }
 
-    if (Number(formData.pricePerHour) <= 0) {
+    if (
+      !Number.isFinite(Number(formData.pricePerHour)) ||
+      Number(formData.pricePerHour) <= 0
+    ) {
       setError("Hourly price must be greater than zero.");
       return;
     }
@@ -113,9 +123,51 @@ export default function AddStudioPage() {
       return;
     }
 
-    setMessage(
-      "Your studio information is ready. Publishing will be enabled after backend integration."
-    );
+    setIsSubmitting(true);
+
+    try {
+      const studioData = {
+        name: formData.name.trim(),
+        category: formData.category,
+        location: formData.location.trim(),
+        image: formData.image.trim(),
+        pricePerHour: Number(formData.pricePerHour),
+        capacity: formData.capacity
+          ? Number(formData.capacity)
+          : null,
+        description: formData.description.trim(),
+        amenities: formData.amenities,
+      };
+
+      const result = await createStudio(studioData);
+
+      if (!result) {
+        throw new Error("Studio could not be published.");
+      }
+
+      setMessage("Your studio has been published successfully!");
+
+      setFormData({
+        name: "",
+        category: "",
+        location: "",
+        image: "",
+        pricePerHour: "",
+        capacity: "",
+        description: "",
+        amenities: [],
+      });
+
+      setTimeout(() => {
+        router.push("/my-listings");
+      }, 1200);
+    } catch (err) {
+      setError(
+        err.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const inputClass =
@@ -182,6 +234,7 @@ export default function AddStudioPage() {
                     id="name"
                     name="name"
                     type="text"
+                    required
                     placeholder="e.g. Creative Space Studio"
                     value={formData.name}
                     onChange={handleChange}
@@ -196,14 +249,15 @@ export default function AddStudioPage() {
                   <select
                     id="category"
                     name="category"
+                    required
                     value={formData.category}
                     onChange={handleChange}
                     className={inputClass}
                   >
                     <option value="">Select a category</option>
                     {categories.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
+                      <option key={item.value} value={item.value}>
+                        {item.label}
                       </option>
                     ))}
                   </select>
@@ -220,6 +274,7 @@ export default function AddStudioPage() {
                     id="location"
                     name="location"
                     type="text"
+                    required
                     placeholder="e.g. Dhaka, Bangladesh"
                     value={formData.location}
                     onChange={handleChange}
@@ -269,9 +324,6 @@ export default function AddStudioPage() {
                     unoptimized
                     sizes="(max-width: 768px) 100vw, 800px"
                     className="object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
                   />
                 </div>
               )}
@@ -309,6 +361,7 @@ export default function AddStudioPage() {
                     type="number"
                     min="1"
                     step="0.01"
+                    required
                     placeholder="e.g. 50"
                     value={formData.pricePerHour}
                     onChange={handleChange}
@@ -357,6 +410,7 @@ export default function AddStudioPage() {
                 name="description"
                 rows={6}
                 maxLength={1500}
+                required
                 placeholder="Describe your studio, equipment, space and available facilities..."
                 value={formData.description}
                 onChange={handleChange}
@@ -433,16 +487,17 @@ export default function AddStudioPage() {
                     Ready to share your studio?
                   </p>
                   <p className="mt-1 text-xs text-[#777970]">
-                    Review your information before publishing.
+                    Your studio will be saved to your account.
                   </p>
                 </div>
 
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-3 rounded-full bg-[#252724] px-8 py-4 text-sm font-semibold text-white transition hover:bg-[#C66B45]"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-3 rounded-full bg-[#252724] px-8 py-4 text-sm font-semibold text-white transition hover:bg-[#C66B45] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Publish Studio
-                  <ArrowRight size={18} />
+                  {isSubmitting ? "Publishing..." : "Publish Studio"}
+                  {!isSubmitting && <ArrowRight size={18} />}
                 </button>
               </div>
             </div>
@@ -450,7 +505,7 @@ export default function AddStudioPage() {
 
           <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs text-[#99998F]">
             <Clock size={14} />
-            Studio publishing will be enabled after backend integration.
+            Your creative space will be added to StudioSpace.
           </p>
         </div>
       </main>

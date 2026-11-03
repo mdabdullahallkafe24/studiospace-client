@@ -90,7 +90,7 @@ export default function DeleteModal({
             type="button"
             onClick={handleDelete}
             disabled={loading}
-            className="btn flex-1 rounded-xl border-0 bg-red-600 text-white hover:bg-red-700"
+           
           >
             <Trash2 size={16} />
             {loading ? "Deleting..." : "Yes, Delete"}

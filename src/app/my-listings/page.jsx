@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -17,34 +16,80 @@ import { toast } from "sonner";
 
 import DeleteModal from "@/components/DeleteModal";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { getMyListings, deleteStudio } from "@/lib/api";
 
 export default function MyListingsPage() {
   const [search, setSearch] = useState("");
+  const [studios, setStudios] = useState([]);
   const [selectedStudio, setSelectedStudio] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Real studio data will come from the backend API later.
-  const studios = [];
+  // Load logged-in user's studios
+  useEffect(() => {
+    const loadMyListings = async () => {
+      try {
+        setIsLoading(true);
+
+        const result = await getMyListings();
+
+        setStudios(Array.isArray(result) ? result : []);
+      } catch (error) {
+        console.error("Failed to load listings:", error);
+        toast.error(error.message || "Could not load your studio listings.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMyListings();
+  }, []);
 
   const filteredStudios = studios.filter((studio) =>
     (studio.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  // Open delete confirmation modal.
   const handleDeleteClick = (studio) => {
     setSelectedStudio(studio);
   };
 
-  // Confirm delete (backend integration pending).
-  const handleDeleteConfirm = () => {
-    toast.info("Studio deletion will be available after backend integration.");
-    setSelectedStudio(null);
+  // Delete studio from MongoDB
+  const handleDeleteConfirm = async () => {
+    if (!selectedStudio || isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+
+      await deleteStudio(selectedStudio._id);
+
+      setStudios((previous) =>
+        previous.filter(
+          (studio) => studio._id !== selectedStudio._id
+        )
+      );
+
+      toast.success("Studio deleted successfully.");
+      setSelectedStudio(null);
+    } catch (error) {
+      console.error("Failed to delete studio:", error);
+      toast.error(error.message || "Failed to delete studio.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
+  const activeCount = studios.filter(
+    (studio) => studio.status === "active"
+  ).length;
+
+  const pendingCount = studios.filter(
+    (studio) => studio.status === "pending"
+  ).length;
 
   return (
     <ProtectedRoute>
       <main className="min-h-screen bg-[#FAF9F6] px-5 py-12 md:py-16">
         <div className="studio-container">
-
           {/* Heading */}
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
@@ -93,7 +138,7 @@ export default function MyListingsPage() {
               <p className="mt-5 text-sm text-[#777970]">Active Listings</p>
 
               <h2 className="mt-2 text-3xl font-semibold text-[#252724]">
-                {studios.filter((studio) => studio.status === "active").length}
+                {activeCount}
               </h2>
             </div>
 
@@ -105,7 +150,7 @@ export default function MyListingsPage() {
               <p className="mt-5 text-sm text-[#777970]">Pending Listings</p>
 
               <h2 className="mt-2 text-3xl font-semibold text-[#252724]">
-                {studios.filter((studio) => studio.status === "pending").length}
+                {pendingCount}
               </h2>
             </div>
           </div>
@@ -136,23 +181,35 @@ export default function MyListingsPage() {
               </div>
             </div>
 
-            {/* Studio Cards */}
-            {filteredStudios.length > 0 ? (
+            {/* Loading */}
+            {isLoading ? (
+              <div className="mt-8 rounded-2xl border border-[#EAE7DF] bg-white px-6 py-16 text-center">
+                <p className="text-sm text-[#777970]">
+                  Loading your studio listings...
+                </p>
+              </div>
+            ) : filteredStudios.length > 0 ? (
               <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredStudios.map((studio) => (
                   <article
                     key={studio._id}
                     className="overflow-hidden rounded-2xl border border-[#EAE7DF] bg-white"
                   >
-                    <div className="relative h-52 w-full">
-                      <Image
-                        src={studio.image}
-                        alt={studio.name || "Studio image"}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
+                    <div className="relative h-52 w-full bg-[#F0EEE8]">
+                      {studio.image ? (
+                        <img
+                          src={studio.image}
+                          alt={studio.name || "Studio image"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Building2
+                            size={42}
+                            className="text-[#C66B45]"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-5">
@@ -224,7 +281,7 @@ export default function MyListingsPage() {
         {/* Delete Confirmation Modal */}
         <DeleteModal
           isOpen={Boolean(selectedStudio)}
-          onClose={() => setSelectedStudio(null)}
+          onClose={() => !isDeleting && setSelectedStudio(null)}
           onConfirm={handleDeleteConfirm}
           studioName={selectedStudio?.name || "this studio"}
         />
@@ -232,3 +289,4 @@ export default function MyListingsPage() {
     </ProtectedRoute>
   );
 }
+

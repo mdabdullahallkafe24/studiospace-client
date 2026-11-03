@@ -3,71 +3,127 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Building2,
   CalendarCheck,
-  Wallet,
-  Star,
+  CalendarDays,
   Plus,
   ArrowUpRight,
   Clock,
   MapPin,
   LogOut,
+  LoaderCircle,
+  Image as ImageIcon,
 } from "lucide-react";
+
 import { authClient } from "@/lib/auth-client";
+import { getMyListings, getMyBookings } from "@/lib/api";
 import { toast } from "sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-const stats = [
-  {
-    title: "Total Listings",
-    value: "0",
-    note: "Your listed creative spaces",
-    icon: Building2,
-  },
-  {
-    title: "Total Bookings",
-    value: "0",
-    note: "Bookings received",
-    icon: CalendarCheck,
-  },
-  {
-    title: "Total Earnings",
-    value: "$0",
-    note: "Your booking revenue",
-    icon: Wallet,
-  },
-  {
-    title: "Average Rating",
-    value: "—",
-    note: "Based on guest reviews",
-    icon: Star,
-  },
-];
-
-const quickActions = [
-  {
-    title: "Add New Studio",
-    description: "List a creative space and start hosting.",
-    href: "/add-studio",
-    icon: Plus,
-  },
-  {
-    title: "My Studio Listings",
-    description: "Manage and update your studio spaces.",
-    href: "/my-listings",
-    icon: Building2,
-  },
-  {
-    title: "My Bookings",
-    description: "View your upcoming and past bookings.",
-    href: "/my-bookings",
-    icon: CalendarCheck,
-  },
-];
-
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  const [studios, setStudios] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+
+        const [studioResult, bookingResult] = await Promise.all([
+          getMyListings(),
+          getMyBookings(),
+        ]);
+
+        const studioList = Array.isArray(studioResult)
+          ? studioResult
+          : studioResult?.studios || studioResult?.items || [];
+
+        const bookingList = Array.isArray(bookingResult)
+          ? bookingResult
+          : bookingResult?.bookings || bookingResult?.items || [];
+
+        setStudios(studioList);
+        setBookings(bookingList);
+      } catch (error) {
+        toast.error(error.message || "Failed to load dashboard.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  const upcomingBookings = bookings.filter(
+    (booking) => booking.status?.toLowerCase() === "upcoming"
+  );
+
+  const completedBookings = bookings.filter(
+    (booking) => booking.status?.toLowerCase() === "completed"
+  );
+
+  const recentBookings = [...bookings]
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || a.date || 0).getTime();
+      const dateB = new Date(b.createdAt || b.date || 0).getTime();
+      return dateB - dateA;
+    })
+    .slice(0, 4);
+
+  const stats = [
+    {
+      title: "Total Listings",
+      value: studios.length,
+      note: "Your listed creative spaces",
+      icon: Building2,
+    },
+    {
+      title: "Total Bookings",
+      value: bookings.length,
+      note: "Your reservations",
+      icon: CalendarCheck,
+    },
+    {
+      title: "Upcoming Bookings",
+      value: upcomingBookings.length,
+      note: "Your upcoming sessions",
+      icon: Clock,
+    },
+    {
+      title: "Completed Bookings",
+      value: completedBookings.length,
+      note: "Your booking history",
+      icon: CalendarDays,
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: "Add New Studio",
+      description: "List a creative space and start hosting.",
+      href: "/add-studio",
+      icon: Plus,
+    },
+    {
+      title: "My Studio Listings",
+      description: "Manage and update your studio spaces.",
+      href: "/my-listings",
+      icon: Building2,
+    },
+    {
+      title: "My Bookings",
+      description: "View your upcoming and past bookings.",
+      href: "/my-bookings",
+      icon: CalendarCheck,
+    },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -87,6 +143,33 @@ export default function DashboardPage() {
     }
   };
 
+  const formatDate = (date) => {
+    if (!date) return "Date unavailable";
+
+    const parsedDate = new Date(`${date}`.slice(0, 10) + "T00:00:00");
+
+    if (Number.isNaN(parsedDate.getTime())) return "Date unavailable";
+
+    return parsedDate.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (time) => {
+    if (!time) return "";
+
+    const [hours, minutes] = time.split(":");
+    const date = new Date();
+    date.setHours(Number(hours), Number(minutes || 0));
+
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-[#FAF9F6] px-5 py-12">
@@ -104,7 +187,8 @@ export default function DashboardPage() {
               </h1>
 
               <p className="mt-4 text-sm text-[#777970]">
-                Manage your creative spaces, bookings and hosting activity.
+                Welcome back{user?.name ? `, ${user.name}` : ""}! Manage your
+                creative spaces, bookings and hosting activity.
               </p>
             </div>
 
@@ -128,7 +212,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Statistics */}
           <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
@@ -149,7 +233,7 @@ export default function DashboardPage() {
                   </div>
 
                   <h2 className="text-3xl font-semibold text-[#252724]">
-                    {stat.value}
+                    {loading ? "—" : stat.value}
                   </h2>
 
                   <p className="mt-2 text-xs text-[#999]">{stat.note}</p>
@@ -206,6 +290,8 @@ export default function DashboardPage() {
 
           {/* Recent Activity */}
           <section className="grid gap-6 lg:grid-cols-2">
+
+            {/* Recent Bookings */}
             <div className="rounded-2xl border border-[#E9E6DE] bg-white p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
@@ -221,26 +307,86 @@ export default function DashboardPage() {
                 <CalendarCheck className="text-[#C66B45]" size={22} />
               </div>
 
-              <div className="rounded-xl bg-[#FAF9F6] px-5 py-10 text-center">
-                <Clock className="mx-auto mb-3 text-[#C66B45]" size={30} />
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <LoaderCircle
+                    className="animate-spin text-[#C66B45]"
+                    size={28}
+                  />
+                </div>
+              ) : recentBookings.length === 0 ? (
+                <div className="rounded-xl bg-[#FAF9F6] px-5 py-10 text-center">
+                  <Clock className="mx-auto mb-3 text-[#C66B45]" size={30} />
 
-                <h3 className="font-medium text-[#252724]">
-                  No bookings yet
-                </h3>
+                  <h3 className="font-medium text-[#252724]">
+                    No bookings yet
+                  </h3>
 
-                <p className="mt-2 text-sm text-[#999]">
-                  Your booking activity will appear here.
-                </p>
+                  <p className="mt-2 text-sm text-[#999]">
+                    Your booking activity will appear here.
+                  </p>
 
-                <Link
-                  href="/my-bookings"
-                  className="mt-4 inline-block text-sm font-semibold text-[#C66B45] hover:underline"
-                >
-                  View all bookings
-                </Link>
-              </div>
+                  <Link
+                    href="/studios"
+                    className="mt-4 inline-block text-sm font-semibold text-[#C66B45] hover:underline"
+                  >
+                    Explore Studios
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentBookings.map((booking) => (
+                    <div
+                      key={booking._id || booking.id}
+                      className="flex items-center gap-4 rounded-xl bg-[#FAF9F6] p-4"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F0EEE8] text-[#C66B45]">
+                        {booking.studioImage ? (
+                          <img
+                            src={booking.studioImage}
+                            alt={booking.studioName || "Studio"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Building2 size={22} />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-sm font-semibold text-[#252724]">
+                          {booking.studioName || "Studio"}
+                        </h3>
+
+                        <p className="mt-1 text-xs text-[#777970]">
+                          {formatDate(booking.date)}
+                          {booking.startTime
+                            ? ` · ${formatTime(booking.startTime)}`
+                            : ""}
+                        </p>
+
+                        <p className="mt-1 text-xs capitalize text-[#697B63]">
+                          {booking.status}
+                        </p>
+                      </div>
+
+                      <p className="shrink-0 text-sm font-semibold text-[#C66B45]">
+                        ${Number(booking.totalPrice || 0).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Link
+                href="/my-bookings"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#C66B45] hover:underline"
+              >
+                View all bookings
+                <ArrowUpRight size={16} />
+              </Link>
             </div>
 
+            {/* Your Studios */}
             <div className="rounded-2xl border border-[#E9E6DE] bg-white p-7">
               <div className="mb-6 flex items-center justify-between">
                 <div>
@@ -256,29 +402,88 @@ export default function DashboardPage() {
                 <Building2 className="text-[#C66B45]" size={22} />
               </div>
 
-              <div className="rounded-xl bg-[#FAF9F6] px-5 py-10 text-center">
-                <MapPin className="mx-auto mb-3 text-[#C66B45]" size={30} />
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <LoaderCircle
+                    className="animate-spin text-[#C66B45]"
+                    size={28}
+                  />
+                </div>
+              ) : studios.length === 0 ? (
+                <div className="rounded-xl bg-[#FAF9F6] px-5 py-10 text-center">
+                  <MapPin className="mx-auto mb-3 text-[#C66B45]" size={30} />
 
-                <h3 className="font-medium text-[#252724]">
-                  No studios listed
-                </h3>
+                  <h3 className="font-medium text-[#252724]">
+                    No studios listed
+                  </h3>
 
-                <p className="mt-2 text-sm text-[#999]">
-                  Add your first creative space to get started.
-                </p>
+                  <p className="mt-2 text-sm text-[#999]">
+                    Add your first creative space to get started.
+                  </p>
 
-                <Link
-                  href="/add-studio"
-                  className="btn btn-sm mt-4 rounded-lg border-0 bg-[#C66B45] text-white hover:bg-[#ad5937]"
-                >
-                  <Plus size={15} />
-                  Add a Studio
-                </Link>
-              </div>
+                  <Link
+                    href="/add-studio"
+                    className="btn btn-sm mt-4 rounded-lg border-0 bg-[#C66B45] text-white hover:bg-[#ad5937]"
+                  >
+                    <Plus size={15} />
+                    Add a Studio
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {studios.slice(0, 4).map((studio) => (
+                    <Link
+                      key={studio._id || studio.id}
+                      href={`/studios/${studio._id || studio.id}`}
+                      className="flex items-center gap-4 rounded-xl bg-[#FAF9F6] p-4 transition hover:bg-[#F0EEE8]"
+                    >
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#F0EEE8] text-[#C66B45]">
+                        {studio.image ? (
+                          <img
+                            src={studio.image}
+                            alt={studio.name || "Studio"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon size={23} />
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-sm font-semibold text-[#252724]">
+                          {studio.name || "Untitled Studio"}
+                        </h3>
+
+                        <p className="mt-1 flex items-center gap-1 truncate text-xs text-[#777970]">
+                          <MapPin size={12} />
+                          {studio.location || "Location unavailable"}
+                        </p>
+
+                        <p className="mt-1 text-xs font-semibold text-[#C66B45]">
+                          ${Number(studio.pricePerHour || 0).toFixed(2)} / hour
+                        </p>
+                      </div>
+
+                      <ArrowUpRight
+                        size={18}
+                        className="shrink-0 text-[#999]"
+                      />
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              <Link
+                href="/my-listings"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#C66B45] hover:underline"
+              >
+                Manage Listings
+                <ArrowUpRight size={16} />
+              </Link>
             </div>
           </section>
 
-          {/* Host Tip */}
+          {/* Hosting Tip */}
           <section className="mt-10 flex flex-col justify-between gap-5 rounded-2xl bg-[#252724] p-7 text-white md:flex-row md:items-center md:p-10">
             <div>
               <p className="mb-3 text-xs font-bold uppercase tracking-[2px] text-[#D99170]">

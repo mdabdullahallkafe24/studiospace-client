@@ -1,36 +1,151 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# StudioSpace
 
-## Getting Started
+StudioSpace is a peer-to-peer creative workspace and production studio sharing platform. It helps creators discover studios and book suitable spaces, while studio hosts can publish and manage their listings and booking requests.
 
-First, run the development server:
+## Live Website
+
+Add your deployed website URL here.
+
+## Features
+
+1. Explore creative studios such as photography studios, sound stages, podcast rooms, music suites, and art workshops.
+2. Search and filter studios by keyword, category, and location.
+3. View detailed studio information, pricing, capacity, amenities, and host details.
+4. Register and log in using email and password.
+5. Google authentication using Better Auth.
+6. Add, edit, and delete personal studio listings.
+7. Book available creative studios.
+8. View personal booking history.
+9. Hosts can view, confirm, and cancel booking requests.
+10. Track pending, confirmed, completed, and cancelled bookings.
+11. Prevent overlapping confirmed bookings.
+12. View and update user profile information.
+13. Responsive design for desktop, tablet, and mobile.
+14. Light and dark theme support.
+
+## Technology Stack
+
+### Frontend
+- Next.js
+- React
+- JavaScript (JSX)
+- Tailwind CSS
+- daisyUI
+- Lucide React
+- Sonner
+- Better Auth Client
+
+### Backend
+- Node.js
+- Express.js
+- MongoDB Atlas
+- MongoDB Native Driver
+- Better Auth
+- CORS
+- dotenv
+
+## Project Structure
+
+```text
+StudioSpace/
+├── client/
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/
+│   │   └── lib/
+│   ├── public/
+│   ├── package.json
+│   └── README.md
+│
+└── server/
+    ├── index.js
+    ├── package.json
+    └── .env
+
+
+    ## Installation and Setup
+
+### Prerequisites
+
+- Node.js
+- npm
+- MongoDB Atlas Account
+- Google OAuth Credentials
+
+### 1. Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd StudioSpace
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 3. Frontend Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env` file inside the `client` folder.
 
-## Learn More
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+BETTER_AUTH_SECRET=YOUR_BETTER_AUTH_SECRET
+BETTER_AUTH_URL=http://localhost:3000
+MONGODB_URI=YOUR_MONGODB_ATLAS_CONNECTION_STRING
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+### 4. Backend Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create a `.env` file inside the `server` folder.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+MONGODB_URI=YOUR_MONGODB_ATLAS_CONNECTION_STRING
+PORT=5000
+CLIENT_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3000
+
+
+
+
+
+## Main Application Routes
+
+| Route | Description |
+|---|---|
+| `/` | Home Page |
+| `/studios` | Explore Studios |
+| `/studios/[id]` | Studio Details |
+| `/register` | Create Account |
+| `/login` | User Login |
+| `/dashboard` | User Dashboard |
+| `/add-studio` | Add New Studio |
+| `/my-listings` | Manage Studio Listings |
+| `/my-bookings` | View My Bookings |
+| `/host-bookings` | Manage Host Bookings |
+| `/profile` | User Profile |
+
+
+
+## Booking Status
+
+- Pending: Booking request is waiting for host approval.
+- Confirmed: Host has accepted the booking.
+- Completed: Booking has been completed.
+- Cancelled: Booking has been cancelled.
+
+## Deployment
+
+- Frontend: Vercel
+- Backend: vercel
+- Database: MongoDB Atlas
+
+
+
+
+## Important Notes
+
+- Replace the GitHub repository URL before submission.
+- Add the live website URL after deployment.
+- Add examiner test credentials if required.
+- Keep all secret keys and database credentials private.
+- Never upload `.env` files to GitHub.

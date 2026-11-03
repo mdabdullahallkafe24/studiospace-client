@@ -12,6 +12,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { createBooking } from "@/lib/api";
+
 export default function BookingModal({
   studio,
   onClose,
@@ -25,8 +27,13 @@ export default function BookingModal({
 
   if (!studio) return null;
 
-  const price = Number(studio.price || studio.hourlyPrice || 0);
+  const price = Number(
+    studio.pricePerHour || studio.price || studio.hourlyPrice || 0
+  );
+
   const total = price * Number(hours);
+
+  const today = new Date().toLocaleDateString("en-CA");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,29 +43,43 @@ export default function BookingModal({
       return;
     }
 
-    if (date < new Date().toLocaleDateString("en-CA")) {
-      toast.error("Please select a future date.");
+    if (date < today) {
+      toast.error("Please select today or a future date.");
       return;
     }
 
-    setLoading(true);
+    if (Number(guests) < 1 || Number(hours) < 1) {
+      toast.error("Please enter valid booking details.");
+      return;
+    }
 
-    const bookingData = {
-      studioId: studio._id || studio.id,
-      date,
-      startTime,
-      hours: Number(hours),
-      guests: Number(guests),
-      totalPrice: total,
-    };
+    if (studio.capacity && Number(guests) > Number(studio.capacity)) {
+      toast.error(`Maximum guest capacity is ${studio.capacity}.`);
+      return;
+    }
 
     try {
+      setLoading(true);
+
+      const bookingData = {
+        studioId: studio._id || studio.id,
+        date,
+        startTime,
+        hours: Number(hours),
+        guests: Number(guests),
+      };
+
       if (onBookingSubmit) {
         await onBookingSubmit(bookingData);
       } else {
-        toast.info("Booking will be available after backend integration.");
+        await createBooking(bookingData);
       }
+
+      toast.success("Your studio booking was successful!");
+
+      onClose?.();
     } catch (error) {
+      console.error("Booking failed:", error);
       toast.error(error.message || "Unable to submit booking.");
     } finally {
       setLoading(false);
@@ -116,7 +137,7 @@ export default function BookingModal({
 
             <input
               type="date"
-              min={new Date().toLocaleDateString("en-CA")}
+              min={today}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="input input-bordered w-full rounded-xl bg-white"
@@ -213,7 +234,7 @@ export default function BookingModal({
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || price <= 0}
             className="btn w-full rounded-xl border-0 bg-[#C66B45] text-white hover:bg-[#ad5937]"
           >
             {loading ? "Processing..." : "Continue to Booking"}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -108,9 +109,7 @@ export default function Navbar() {
       {profileOpen && (
         <div
           className={`z-50 mt-2 rounded-xl border border-[#E9E6DE] bg-white p-2 shadow-xl ${
-            mobile
-              ? "w-full"
-              : "absolute right-0 top-full w-56"
+            mobile ? "w-full" : "absolute right-0 top-full w-56"
           }`}
         >
           {/* User Information */}
@@ -174,6 +173,16 @@ export default function Navbar() {
             My Listings
           </Link>
 
+          {/* Host Bookings */}
+          <Link
+            href="/host-bookings"
+            onClick={closeMenu}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-[#555] hover:bg-[#F0EEE8] hover:text-[#C66B45]"
+          >
+            <CalendarDays size={17} />
+            Host Bookings
+          </Link>
+
           {/* Logout */}
           <button
             type="button"
@@ -192,7 +201,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#E9E6DE] bg-[#FAF9F6]/95 backdrop-blur-md">
       <nav className="studio-container flex h-20 items-center justify-between px-5">
-
         {/* Logo */}
         <Link
           href="/"

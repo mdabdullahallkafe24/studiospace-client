@@ -86,7 +86,7 @@ export default function StudioCard({ studio }) {
             )}
           </div>
 
-          <span className="text-sm font-semibold text-[#252724]">
+          
             View Details →
           </span>
         </div>

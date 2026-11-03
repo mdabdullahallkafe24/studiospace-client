@@ -1,4 +1,8 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+
+if (!BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL is missing.");
+}
 
 async function handler(request, context) {
   try {

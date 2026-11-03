@@ -185,7 +185,7 @@ export default function Footer() {
             </Link>
           </div>
 
-          <p>Made for creative minds. ✦</p>
+         
         </div>
       </div>
     </footer>

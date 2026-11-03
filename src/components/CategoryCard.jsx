@@ -43,7 +43,8 @@ export default function CategoryCard({ category }) {
         </p>
       )}
 
-     
+      <span className="mt-auto pt-5 text-sm font-semibold text-[#C66B45]">
+
         Explore Category →
       </span>
     </Link>
